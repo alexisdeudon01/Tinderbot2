@@ -13,11 +13,22 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 ENV_FILE="$ROOT_DIR/.env"
+ENV_EXAMPLE_FILE="$ROOT_DIR/.env.example"
+
+# Créer un .env template si absent (jamais committé, see .gitignore)
+if [ ! -f "$ENV_FILE" ]; then
+    if [ -f "$ENV_EXAMPLE_FILE" ]; then
+        cp "$ENV_EXAMPLE_FILE" "$ENV_FILE"
+    else
+        cat > "$ENV_FILE" <<'EOF'
+HA_URL=http://homeassistant:8123
+HA_TOKEN=COLLE_TON_NOUVEAU_TOKEN_ICI
+EOF
+    fi
+fi
 
 # Charger .env
-if [ -f "$ENV_FILE" ]; then
-    source "$ENV_FILE"
-fi
+source "$ENV_FILE"
 
 HA_URL="${HA_URL:-http://homeassistant:8123}"
 HA_TOKEN="${HA_TOKEN:-}"
@@ -37,6 +48,7 @@ step "1/5 — Test de connexion à $HA_URL"
 
 if [ -z "$HA_TOKEN" ] || [ "$HA_TOKEN" = "COLLE_TON_NOUVEAU_TOKEN_ICI" ]; then
     err "HA_TOKEN manquant dans .env — requis pour les étapes dashboard"
+    echo -e "     Ouvre le fichier ${YELLOW}$ENV_FILE${NC} et colle ton token LOCAL (ne le partage pas ici)."
     echo -e "     Continue quand même pour les étapes qui n'en ont pas besoin..."
     SKIP_API=true
 else
