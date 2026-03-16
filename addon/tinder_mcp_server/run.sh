@@ -18,7 +18,7 @@ TOKEN_SECRET=$(cat "$TOKEN_SECRET_FILE")
 
 # Write .env file consumed by the Node.js server
 cat > /app/.env <<EOF
-NODE_ENV=production
+NODE_ENV=development
 PORT=${PORT}
 
 # Tinder API
