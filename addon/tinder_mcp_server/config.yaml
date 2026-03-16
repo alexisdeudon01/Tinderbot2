@@ -21,4 +21,3 @@ schema:
   port: int
   cache_ttl: int
   rate_limit_max: int
-image: "ghcr.io/tinder-mcp/addon-tinder-mcp-server-{arch}"
