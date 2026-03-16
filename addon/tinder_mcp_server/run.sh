@@ -45,4 +45,8 @@ LOG_LEVEL=${LOG_LEVEL}
 EOF
 
 echo "[tinder-mcp] Starting server on port ${PORT} (log_level=${LOG_LEVEL})"
-cd /app && npm start
+cd /app
+
+# Run directly from TypeScript sources in transpile-only mode.
+# This avoids upstream `tsc` build failures while remaining stable for runtime.
+exec node -r ts-node/register/transpile-only src/index.ts

@@ -15,10 +15,10 @@ RUN apk add --no-cache \
     make \
     g++
 
-# Clone and build the glassbead tinder-mcp-server
+# Clone and install the glassbead tinder-mcp-server.
+# Upstream currently fails `tsc` at HEAD; we run in transpile-only mode instead of `npm run build`.
 RUN git clone https://github.com/glassbead-tc/tinder-mcp-server.git . \
-    && npm install \
-    && npm run build
+    && npm install --include=dev --no-fund --no-audit
 
 COPY run.sh /run.sh
 RUN chmod +x /run.sh

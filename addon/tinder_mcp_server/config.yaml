@@ -6,7 +6,7 @@ url: "https://github.com/glassbead-tc/tinder-mcp-server"
 arch:
   - amd64
   - aarch64
-  - armv7
+  # armv7 is deprecated by Supervisor; keep only modern arches.
 startup: application
 boot: auto
 init: false
