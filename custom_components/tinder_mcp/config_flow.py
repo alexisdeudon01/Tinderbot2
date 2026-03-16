@@ -66,8 +66,18 @@ async def _send_otp(hass: HomeAssistant, mcp_url: str, phone_number: str) -> str
             timeout=timeout,
         ) as resp:
             if resp.status == 400:
+                body = await resp.text()
+                _LOGGER.warning("MCP /sms/send returned 400: %s", body[:500])
                 return "invalid_phone"
+            if resp.status == 401:
+                body = await resp.text()
+                _LOGGER.warning("MCP /sms/send returned 401: %s", body[:500])
+                return "auth_failed"
             if resp.status != 200:
+                body = await resp.text()
+                _LOGGER.warning(
+                    "MCP /sms/send returned %s: %s", resp.status, body[:500]
+                )
                 return "auth_failed"
             return None
     except asyncio.TimeoutError:
