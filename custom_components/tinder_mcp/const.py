@@ -38,8 +38,7 @@ DIRECTION_RIGHT = "right"
 DIRECTION_LEFT = "left"
 
 # MCP server HTTP endpoints
-ENDPOINT_AUTH_SMS_SEND = "/mcp/auth/sms/send"
-ENDPOINT_AUTH_SMS_VALIDATE = "/mcp/auth/sms/validate"
+ENDPOINT_TOOLS = "/mcp/tools"
 ENDPOINT_INFO = "/mcp/info"
 ENDPOINT_RECOMMENDATIONS = "/mcp/user/recommendations"
 ENDPOINT_MATCHES = "/mcp/user/matches"

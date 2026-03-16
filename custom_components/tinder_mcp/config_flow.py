@@ -17,9 +17,8 @@ from .const import (
     CONF_USER_ID,
     DEFAULT_MCP_URL,
     DOMAIN,
-    ENDPOINT_AUTH_SMS_SEND,
-    ENDPOINT_AUTH_SMS_VALIDATE,
     ENDPOINT_INFO,
+    ENDPOINT_TOOLS,
     HTTP_TIMEOUT,
 )
 
@@ -60,25 +59,36 @@ async def _send_otp(hass: HomeAssistant, mcp_url: str, phone_number: str) -> str
     session = async_get_clientsession(hass)
     try:
         timeout = aiohttp.ClientTimeout(total=HTTP_TIMEOUT)
+        # Use /mcp/tools to avoid broken /mcp/auth/* validation schemas upstream.
         async with session.post(
-            f"{mcp_url}{ENDPOINT_AUTH_SMS_SEND}",
-            json={"phoneNumber": phone_number},
+            f"{mcp_url}{ENDPOINT_TOOLS}",
+            json={
+                "tool": "authenticate_sms",
+                "params": {"phoneNumber": phone_number},
+            },
             timeout=timeout,
         ) as resp:
-            if resp.status == 400:
-                body = await resp.text()
-                _LOGGER.warning("MCP /sms/send returned 400: %s", body[:500])
-                return "invalid_phone"
-            if resp.status == 401:
-                body = await resp.text()
-                _LOGGER.warning("MCP /sms/send returned 401: %s", body[:500])
-                return "auth_failed"
+            body_text = await resp.text()
             if resp.status != 200:
-                body = await resp.text()
-                _LOGGER.warning(
-                    "MCP /sms/send returned %s: %s", resp.status, body[:500]
-                )
+                _LOGGER.warning("MCP tools authenticate_sms HTTP %s: %s", resp.status, body_text[:500])
                 return "auth_failed"
+
+            try:
+                data = aiohttp.helpers.json_loads(body_text)
+            except Exception:  # noqa: BLE001
+                _LOGGER.warning("MCP tools authenticate_sms invalid JSON: %s", body_text[:500])
+                return "auth_failed"
+
+            if not data.get("success", False):
+                _LOGGER.warning("MCP tools authenticate_sms failed: %s", body_text[:500])
+                return "auth_failed"
+
+            # Expected: { success: true, data: { status: "otp_sent", otpLength: 6 } }
+            status = (data.get("data") or {}).get("status")
+            if status != "otp_sent":
+                _LOGGER.warning("Unexpected authenticate_sms status: %s", status)
+                return "auth_failed"
+
             return None
     except asyncio.TimeoutError:
         return "timeout"
@@ -97,20 +107,37 @@ async def _validate_otp(
     try:
         timeout = aiohttp.ClientTimeout(total=HTTP_TIMEOUT)
         async with session.post(
-            f"{mcp_url}{ENDPOINT_AUTH_SMS_VALIDATE}",
-            json={"phoneNumber": phone_number, "otpCode": otp_code},
+            f"{mcp_url}{ENDPOINT_TOOLS}",
+            json={
+                "tool": "authenticate_sms",
+                "params": {"phoneNumber": phone_number, "otpCode": otp_code},
+            },
             timeout=timeout,
         ) as resp:
+            body_text = await resp.text()
             if resp.status == 400:
                 return None, "invalid_otp"
             if resp.status == 401:
                 return None, "invalid_otp"
             if resp.status != 200:
+                _LOGGER.warning("MCP tools authenticate_sms OTP HTTP %s: %s", resp.status, body_text[:500])
                 return None, "auth_failed"
-            data = await resp.json()
-            user_id: str | None = data.get("data", {}).get("userId")
+
+            try:
+                data = aiohttp.helpers.json_loads(body_text)
+            except Exception:  # noqa: BLE001
+                _LOGGER.warning("MCP tools authenticate_sms OTP invalid JSON: %s", body_text[:500])
+                return None, "auth_failed"
+
+            if not data.get("success", False):
+                _LOGGER.warning("MCP tools authenticate_sms OTP failed: %s", body_text[:500])
+                return None, "invalid_otp"
+
+            payload = data.get("data") or {}
+            user_id: str | None = payload.get("userId")
             if not user_id:
                 return None, "auth_failed"
+
             return user_id, None
     except asyncio.TimeoutError:
         return None, "timeout"

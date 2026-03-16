@@ -85,7 +85,8 @@ class TinderApiClient:
                 method,
                 url,
                 json=json,
-                headers={"x-user-id": self._user_id},
+                # glassbead routes expect x-auth-user-id (not x-user-id)
+                headers={"x-auth-user-id": self._user_id},
                 timeout=self._timeout,
             ) as resp:
                 if resp.status == 401:
@@ -108,12 +109,12 @@ class TinderApiClient:
     async def async_get_recommendations(self) -> list[dict[str, Any]]:
         """GET /mcp/user/recommendations — return list of recommended profiles."""
         data = await self._request("GET", ENDPOINT_RECOMMENDATIONS)
-        return data.get("data", {}).get("results", [])
+        return _extract_recs(data)
 
     async def async_get_matches(self) -> list[dict[str, Any]]:
         """GET /mcp/user/matches — return list of current matches."""
         data = await self._request("GET", ENDPOINT_MATCHES)
-        return data.get("data", {}).get("matches", [])
+        return _extract_matches(data)
 
     async def async_like(self, target_user_id: str) -> dict[str, Any]:
         """POST /mcp/interaction/like/{user_id}."""
@@ -286,3 +287,35 @@ def _extract_photo_url(recommendation: dict[str, Any]) -> str:
     except (KeyError, IndexError, TypeError):
         pass
     return ""
+
+
+def _extract_recs(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    """Handle multiple response shapes for recommendations."""
+    try:
+        # MCP shape: { success: true, data: <tinder_response> }
+        data = payload.get("data", payload)
+        # Tinder response may be { data: { results: [...] } } or { results: [...] }
+        if isinstance(data, dict):
+            if isinstance(data.get("results"), list):
+                return data["results"]
+            inner = data.get("data")
+            if isinstance(inner, dict) and isinstance(inner.get("results"), list):
+                return inner["results"]
+    except Exception:  # noqa: BLE001
+        return []
+    return []
+
+
+def _extract_matches(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    """Handle multiple response shapes for matches."""
+    try:
+        data = payload.get("data", payload)
+        if isinstance(data, dict):
+            if isinstance(data.get("matches"), list):
+                return data["matches"]
+            inner = data.get("data")
+            if isinstance(inner, dict) and isinstance(inner.get("matches"), list):
+                return inner["matches"]
+    except Exception:  # noqa: BLE001
+        return []
+    return []
