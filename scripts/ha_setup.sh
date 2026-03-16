@@ -108,9 +108,11 @@ step "3/5 — Installation de l'add-on Tinder MCP Server"
 if command -v ha &> /dev/null; then
     ADDON_SLUG="tinder_mcp_server"
 
-    # Certaines versions récentes déprécient `ha addons` au profit de `ha apps`
+    # Le CLI Home Assistant a renommé "add-ons" → "apps".
+    # `ha addons` reste compatible mais affiche un warning "deprecated".
+    # On préfère donc `ha apps` si disponible.
     HA_ADDON_GROUP="addons"
-    if ! ha addons --help >/dev/null 2>&1; then
+    if ha apps --help >/dev/null 2>&1; then
         HA_ADDON_GROUP="apps"
     fi
 
