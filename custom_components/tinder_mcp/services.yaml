@@ -1,0 +1,27 @@
+swipe:
+  name: Swipe
+  description: >
+    Swipe droite (Like) ou gauche (Pass) sur un profil Tinder.
+    Si target_user_id est omis, le profil courant affiché est utilisé.
+  fields:
+    direction:
+      name: Direction
+      description: "right = Like, left = Pass"
+      required: true
+      example: "right"
+      selector:
+        select:
+          options:
+            - label: "Like (droite)"
+              value: "right"
+            - label: "Pass (gauche)"
+              value: "left"
+    target_user_id:
+      name: User ID cible
+      description: >
+        Identifiant Tinder de l'utilisateur à swiper.
+        Laissez vide pour utiliser le profil actuellement affiché.
+      required: false
+      example: "60f1a2b3c4d5e6f7a8b9c0d1"
+      selector:
+        text:

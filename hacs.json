@@ -1,0 +1,8 @@
+{
+  "name": "Tinder MCP",
+  "content_in_root": false,
+  "homeassistant": "2023.1.0",
+  "render_readme": true,
+  "country": [],
+  "hide_default_branch": false
+}

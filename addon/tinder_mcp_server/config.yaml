@@ -1,0 +1,24 @@
+name: "Tinder MCP Server"
+version: "1.0.0"
+slug: "tinder_mcp_server"
+description: "MCP server for the Tinder API (glassbead-tc). Handles authentication, rate limiting, caching and exposes HTTP endpoints consumed by the Tinder MCP integration."
+url: "https://github.com/glassbead-tc/tinder-mcp-server"
+arch:
+  - amd64
+  - aarch64
+  - armv7
+ports:
+  3000/tcp: 3000
+ports_description:
+  3000/tcp: "Tinder MCP HTTP API"
+options:
+  log_level: "info"
+  port: 3000
+  cache_ttl: 300
+  rate_limit_max: 100
+schema:
+  log_level: "list(debug|info|warn|error)"
+  port: int
+  cache_ttl: int
+  rate_limit_max: int
+image: "ghcr.io/tinder-mcp/addon-tinder-mcp-server-{arch}"
