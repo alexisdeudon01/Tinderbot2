@@ -73,6 +73,15 @@ if command -v ha &> /dev/null; then
             warn "Résultat : $RESULT"
         fi
     fi
+
+    # Rafraîchir le store pour que l'add-on apparaisse
+    if ha store reload 2>/dev/null; then
+        ok "Store rechargé"
+    elif ha store update 2>/dev/null; then
+        ok "Store mis à jour"
+    else
+        warn "Impossible de recharger le store automatiquement"
+    fi
 else
     warn "CLI 'ha' non disponible (normal si lancé hors HAOS terminal)"
     warn "Dans HAOS Terminal, exécute manuellement :"
@@ -85,12 +94,20 @@ fi
 step "3/5 — Installation de l'add-on Tinder MCP Server"
 
 if command -v ha &> /dev/null; then
+    ADDON_SLUG="tinder_mcp_server"
+
+    # Certaines versions récentes déprécient `ha addons` au profit de `ha apps`
+    HA_ADDON_GROUP="addons"
+    if ! ha addons --help >/dev/null 2>&1; then
+        HA_ADDON_GROUP="apps"
+    fi
+
     echo "  Installation en cours (peut prendre 2-3 min, Docker build Node.js)..."
-    if ha addons install local_tinder_mcp_server 2>&1 | grep -qi "ok\|installed"; then
+    if ha "$HA_ADDON_GROUP" install "$ADDON_SLUG" 2>&1 | grep -qi "ok\|installed"; then
         ok "Add-on installé"
-        ha addons start local_tinder_mcp_server 2>/dev/null && ok "Add-on démarré (port 3000)" || warn "Démarre-le manuellement dans Paramètres > Add-ons"
+        ha "$HA_ADDON_GROUP" start "$ADDON_SLUG" 2>/dev/null && ok "Add-on démarré (port 3000)" || warn "Démarre-le manuellement dans Paramètres > Add-ons"
     else
-        RESULT=$(ha addons install local_tinder_mcp_server 2>&1 || true)
+        RESULT=$(ha "$HA_ADDON_GROUP" install "$ADDON_SLUG" 2>&1 || true)
         warn "Résultat : $RESULT"
         warn "Lance-le manuellement : Paramètres > Modules complémentaires > Tinder MCP Server"
     fi
