@@ -1,0 +1,7 @@
+# Secrets — jamais committés
+.env
+*.token
+
+# Python
+__pycache__/
+*.pyc
