@@ -8,8 +8,9 @@ CONF_MCP_URL = "mcp_url"
 CONF_USER_ID = "user_id"
 CONF_PHONE_NUMBER = "phone_number"
 
-# Default MCP server URL (add-on hostname within HAOS supervisor network)
-DEFAULT_MCP_URL = "http://tinder_mcp_server:3000"
+# Default MCP server URL (the add-on hostname within HAOS supervisor network).
+# For local apps, Supervisor usually exposes the add-on under its hostname.
+DEFAULT_MCP_URL = "http://local-tinder-mcp-server:3000"
 
 # DataUpdateCoordinator refresh interval
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=30)
