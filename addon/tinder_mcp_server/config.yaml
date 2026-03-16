@@ -10,6 +10,8 @@ arch:
 startup: application
 boot: auto
 init: false
+environment:
+  NODE_ENV: development
 ports:
   3000/tcp: 3000
 ports_description:
