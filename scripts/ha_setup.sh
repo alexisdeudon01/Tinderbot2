@@ -121,7 +121,37 @@ if command -v ha &> /dev/null; then
     else
         RESULT=$(ha "$HA_ADDON_GROUP" install "$ADDON_SLUG" 2>&1 || true)
         warn "Résultat : $RESULT"
-        warn "Lance-le manuellement : Paramètres > Modules complémentaires > Tinder MCP Server"
+
+        # Fallback: installer en tant que local add-on si le store ne le voit pas
+        if echo "$RESULT" | grep -qi "does not exist in the store\|does not exist"; then
+            warn "Le store ne voit pas l'add-on. Tentative en 'Local add-on'…"
+
+            LOCAL_ADDONS_DIR="/addons/local"
+            if [ -d "/addons" ]; then
+                mkdir -p "$LOCAL_ADDONS_DIR"
+                if [ -d "$ROOT_DIR/tinder_mcp_server" ]; then
+                    rm -rf "$LOCAL_ADDONS_DIR/$ADDON_SLUG"
+                    cp -r "$ROOT_DIR/tinder_mcp_server" "$LOCAL_ADDONS_DIR/$ADDON_SLUG"
+                    ok "Copié dans $LOCAL_ADDONS_DIR/$ADDON_SLUG"
+
+                    ha store reload >/dev/null 2>&1 || true
+
+                    if ha "$HA_ADDON_GROUP" install "$ADDON_SLUG" 2>&1 | grep -qi "ok\|installed"; then
+                        ok "Add-on installé (local)"
+                        ha "$HA_ADDON_GROUP" start "$ADDON_SLUG" 2>/dev/null && ok "Add-on démarré (port 3000)" || warn "Démarre-le manuellement dans Paramètres > Add-ons"
+                    else
+                        warn "Toujours pas installable via CLI. Installe-le via l'UI :"
+                        warn "Paramètres > Modules complémentaires > Boutique > Local add-ons > Tinder MCP Server"
+                    fi
+                else
+                    warn "Dossier $ROOT_DIR/tinder_mcp_server introuvable"
+                fi
+            else
+                warn "Répertoire /addons introuvable (tu n'es peut-être pas sur HAOS)"
+            fi
+        else
+            warn "Lance-le manuellement : Paramètres > Modules complémentaires > Tinder MCP Server"
+        fi
     fi
 else
     warn "CLI 'ha' non disponible — installe l'add-on manuellement"
