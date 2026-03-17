@@ -3,7 +3,31 @@
     "step": {
       "user": {
         "title": "Tinder MCP — Sign In",
-        "description": "Paste your Tinder **X-Auth-Token** (from browser DevTools).",
+        "description": "Choose how to authenticate with Tinder.",
+        "data": {
+          "method": "Authentication method"
+        },
+        "data_description": {
+          "method": "**Phone number (SMS)**: Tinder sends you a code by SMS — recommended.\n**Manual token**: paste an X-Auth-Token obtained from browser DevTools."
+        }
+      },
+      "phone": {
+        "title": "Tinder MCP — Phone Number",
+        "description": "Enter your number in international format (e.g. +33612345678). Tinder will send you a 6-digit code by SMS.",
+        "data": {
+          "phone_number": "Phone number"
+        }
+      },
+      "otp": {
+        "title": "Tinder MCP — SMS Code",
+        "description": "Enter the 6-digit code received by SMS on {phone}.",
+        "data": {
+          "otp_code": "OTP Code (SMS)"
+        }
+      },
+      "token": {
+        "title": "Tinder MCP — Manual Token",
+        "description": "Paste your Tinder **X-Auth-Token** (from browser DevTools → Network tab → X-Auth-Token header).",
         "data": {
           "auth_token": "Tinder X-Auth-Token"
         }
@@ -11,8 +35,12 @@
     },
     "error": {
       "invalid_auth": "Invalid or expired Tinder token (401).",
+      "invalid_otp": "Incorrect or expired OTP code.",
       "cannot_connect": "Unable to reach the Tinder API.",
-      "timeout": "Timeout while validating the token."
+      "timeout": "Timeout while connecting.",
+      "sms_unavailable": "SMS sending is not available. Use the manual token method instead.",
+      "no_refresh_token": "Tinder response did not include a refresh_token.",
+      "no_api_token": "Tinder response did not include an api_token."
     },
     "abort": {
       "already_configured": "Tinder MCP is already configured."

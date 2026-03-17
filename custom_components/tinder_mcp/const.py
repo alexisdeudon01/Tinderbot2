@@ -5,6 +5,11 @@ DOMAIN = "tinder_mcp"
 
 # Configuration keys stored in ConfigEntry
 CONF_AUTH_TOKEN = "auth_token"
+CONF_PHONE_NUMBER = "phone_number"
+
+# Authentication method choices
+AUTH_METHOD_PHONE = "phone"
+AUTH_METHOD_TOKEN = "token"
 
 # Tinder API
 TINDER_API_BASE = "https://api.gotinder.com"
@@ -40,6 +45,11 @@ ENDPOINT_MATCHES = "/v2/matches"
 ENDPOINT_LIKE = "/like/{user_id}"
 ENDPOINT_PASS = "/pass/{user_id}"
 ENDPOINT_SUPERLIKE = "/like/{user_id}/super"
+
+# Tinder SMS authentication endpoints
+ENDPOINT_AUTH_SMS_SEND = "/v2/auth/sms/send"
+ENDPOINT_AUTH_SMS_VALIDATE = "/v2/auth/sms/validate"
+ENDPOINT_AUTH_LOGIN_SMS = "/v2/auth/login/sms"
 
 # HTTP timeout (seconds)
 HTTP_TIMEOUT = 15

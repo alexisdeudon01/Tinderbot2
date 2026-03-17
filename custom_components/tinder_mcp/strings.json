@@ -2,8 +2,32 @@
   "config": {
     "step": {
       "user": {
-        "title": "Tinder MCP — Connexion",
-        "description": "Collez votre token Tinder **X-Auth-Token** (récupéré depuis les DevTools du navigateur).",
+        "title": "Tinder MCP — Méthode de connexion",
+        "description": "Choisissez comment vous authentifier sur Tinder.",
+        "data": {
+          "method": "Méthode d'authentification"
+        },
+        "data_description": {
+          "method": "**Numéro de téléphone (SMS)** : Tinder vous envoie un code par SMS — méthode recommandée.\n**Token manuel** : collez un X-Auth-Token récupéré depuis les DevTools du navigateur."
+        }
+      },
+      "phone": {
+        "title": "Tinder MCP — Numéro de téléphone",
+        "description": "Entrez votre numéro au format international (ex: +33612345678). Tinder vous enverra un code par SMS.",
+        "data": {
+          "phone_number": "Numéro de téléphone"
+        }
+      },
+      "otp": {
+        "title": "Tinder MCP — Code SMS",
+        "description": "Entrez le code à 6 chiffres reçu par SMS sur le numéro {phone}.",
+        "data": {
+          "otp_code": "Code OTP (SMS)"
+        }
+      },
+      "token": {
+        "title": "Tinder MCP — Token manuel",
+        "description": "Collez votre **X-Auth-Token** Tinder (récupéré depuis les DevTools du navigateur → onglet Réseau → en-tête X-Auth-Token).",
         "data": {
           "auth_token": "Tinder X-Auth-Token"
         }
@@ -11,8 +35,12 @@
     },
     "error": {
       "invalid_auth": "Token Tinder invalide ou expiré (401).",
+      "invalid_otp": "Code OTP incorrect ou expiré.",
       "cannot_connect": "Impossible de joindre l'API Tinder.",
-      "timeout": "Timeout lors de la validation du token."
+      "timeout": "Timeout lors de la connexion.",
+      "sms_unavailable": "L'envoi de SMS n'est pas disponible. Utilisez le token manuel à la place.",
+      "no_refresh_token": "La réponse Tinder ne contient pas de refresh_token.",
+      "no_api_token": "La réponse Tinder ne contient pas d'api_token."
     },
     "abort": {
       "already_configured": "Tinder MCP est déjà configuré."

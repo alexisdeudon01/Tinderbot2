@@ -27,13 +27,31 @@ The server handles:
 
 ## Authentication Flow
 
-The add-on does **not** require your Tinder token in its config. Authentication happens via the HA integration UI:
+The integration offers two authentication methods — choose the one that works for you:
 
-1. Enter your phone number (e.g. `+33612345678`)
-2. Tinder sends you an SMS with a 6-digit OTP
-3. Enter the OTP in HA → session is opened automatically
+### Method 1 — Phone number / SMS OTP (recommended)
 
-The `api_token` is stored securely inside the add-on's `/data/` directory and refreshed automatically.
+This is the simplest method and requires no manual token extraction:
+
+1. In HA go to *Configuration → Devices & Services → Add Integration → Tinder MCP*
+2. Select **Phone number (SMS)**
+3. Enter your phone number in international format (e.g. `+33612345678`)
+4. Tinder sends a 6-digit code by SMS
+5. Enter the code in HA → the session opens automatically
+
+The integration exchanges the OTP for a Tinder `api_token` and stores it securely in the HA config entry. No manual copy-pasting of tokens is needed.
+
+> **Note:** If the SMS endpoint returns a 404 error (Tinder occasionally deprecates or restricts these endpoints), fall back to Method 2.
+
+### Method 2 — Manual X-Auth-Token (fallback)
+
+Use this method if SMS is unavailable or returns errors:
+
+1. Open [tinder.com](https://tinder.com) in your browser and log in
+2. Open DevTools (F12) → **Network** tab
+3. Reload the page and filter requests by `gotinder.com`
+4. Click any request and look at the **Request Headers** for `X-Auth-Token`
+5. Copy its value and paste it into HA during integration setup
 
 ## Networking
 
@@ -54,3 +72,4 @@ http://localhost:3000
 - **Add-on won't start**: Check the add-on logs for Node.js errors
 - **401 errors**: Your Tinder session expired — re-authenticate via the HA integration
 - **No recommendations**: Tinder may have rate-limited your account (wait a few minutes)
+- **SMS returns 404**: The SMS auth endpoint is unavailable — use the manual token method instead
