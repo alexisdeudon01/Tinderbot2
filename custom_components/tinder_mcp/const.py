@@ -4,13 +4,10 @@ from datetime import timedelta
 DOMAIN = "tinder_mcp"
 
 # Configuration keys stored in ConfigEntry
-CONF_MCP_URL = "mcp_url"
-CONF_USER_ID = "user_id"
-CONF_PHONE_NUMBER = "phone_number"
+CONF_AUTH_TOKEN = "auth_token"
 
-# Default MCP server URL (the add-on hostname within HAOS supervisor network).
-# For local apps, Supervisor usually exposes the add-on under its hostname.
-DEFAULT_MCP_URL = "http://local-tinder-mcp-server:3000"
+# Tinder API
+TINDER_API_BASE = "https://api.gotinder.com"
 
 # DataUpdateCoordinator refresh interval
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=30)
@@ -37,14 +34,12 @@ ATTR_TARGET_USER_ID = "target_user_id"
 DIRECTION_RIGHT = "right"
 DIRECTION_LEFT = "left"
 
-# MCP server HTTP endpoints
-ENDPOINT_TOOLS = "/mcp/tools"
-ENDPOINT_INFO = "/mcp/info"
-ENDPOINT_RECOMMENDATIONS = "/mcp/user/recommendations"
-ENDPOINT_MATCHES = "/mcp/user/matches"
-ENDPOINT_LIKE = "/mcp/interaction/like/{user_id}"
-ENDPOINT_PASS = "/mcp/interaction/pass/{user_id}"
-ENDPOINT_SUPERLIKE = "/mcp/interaction/superlike/{user_id}"
+# Tinder API endpoints (direct calls with X-Auth-Token)
+ENDPOINT_RECOMMENDATIONS = "/v2/recs/core"
+ENDPOINT_MATCHES = "/v2/matches"
+ENDPOINT_LIKE = "/like/{user_id}"
+ENDPOINT_PASS = "/pass/{user_id}"
+ENDPOINT_SUPERLIKE = "/like/{user_id}/super"
 
 # HTTP timeout (seconds)
 HTTP_TIMEOUT = 15

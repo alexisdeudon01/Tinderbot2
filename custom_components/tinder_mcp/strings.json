@@ -3,26 +3,16 @@
     "step": {
       "user": {
         "title": "Tinder MCP — Connexion",
-        "description": "Renseignez l'URL de votre serveur MCP et votre numéro de téléphone Tinder pour recevoir un code SMS.",
+        "description": "Collez votre token Tinder **X-Auth-Token** (récupéré depuis les DevTools du navigateur).",
         "data": {
-          "mcp_url": "URL du serveur MCP",
-          "phone_number": "Numéro de téléphone (ex: +33612345678)"
-        }
-      },
-      "otp": {
-        "title": "Tinder MCP — Confirmation SMS",
-        "description": "Entrez le code à 6 chiffres reçu par SMS sur le **{phone_number}**.",
-        "data": {
-          "otp_code": "Code OTP (6 chiffres)"
+          "auth_token": "Tinder X-Auth-Token"
         }
       }
     },
     "error": {
-      "cannot_connect": "Impossible de joindre le serveur MCP. Vérifiez que l'add-on est démarré.",
-      "invalid_phone": "Numéro de téléphone invalide. Utilisez le format international (+33...).",
-      "invalid_otp": "Code OTP invalide ou expiré. Recommencez depuis le début.",
-      "auth_failed": "Authentification échouée. Vérifiez votre numéro et réessayez.",
-      "timeout": "Le serveur MCP ne répond pas (timeout). Vérifiez l'add-on."
+      "invalid_auth": "Token Tinder invalide ou expiré (401).",
+      "cannot_connect": "Impossible de joindre l'API Tinder.",
+      "timeout": "Timeout lors de la validation du token."
     },
     "abort": {
       "already_configured": "Tinder MCP est déjà configuré."
@@ -32,9 +22,7 @@
     "step": {
       "init": {
         "title": "Options Tinder MCP",
-        "data": {
-          "mcp_url": "URL du serveur MCP"
-        }
+        "data": {}
       }
     }
   }

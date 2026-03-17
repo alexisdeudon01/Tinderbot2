@@ -1,12 +1,13 @@
 """Tinder MCP integration for Home Assistant.
 
-Communicates with a local glassbead/tinder-mcp-server add-on via HTTP.
+Note: Tinder SMS authentication endpoints used by third-party MCP servers are
+deprecated by Tinder (often returning 404). This integration uses a direct
+`X-Auth-Token` (retrieved manually) to access the Tinder API.
 """
 from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import timedelta
 from typing import Any
 
 import aiohttp
@@ -22,8 +23,7 @@ from .const import (
     ATTR_COORDINATOR,
     ATTR_DIRECTION,
     ATTR_TARGET_USER_ID,
-    CONF_MCP_URL,
-    CONF_USER_ID,
+    CONF_AUTH_TOKEN,
     DEFAULT_SCAN_INTERVAL,
     DIRECTION_LEFT,
     DIRECTION_RIGHT,
@@ -35,6 +35,7 @@ from .const import (
     ENDPOINT_SUPERLIKE,
     HTTP_TIMEOUT,
     SERVICE_SWIPE,
+    TINDER_API_BASE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ class TinderAuthError(Exception):
 
 
 class TinderConnectionError(Exception):
-    """Raised when the MCP server is unreachable (timeout / network error)."""
+    """Raised when the Tinder API is unreachable (timeout / network error)."""
 
 
 # ---------------------------------------------------------------------------
@@ -59,12 +60,12 @@ class TinderConnectionError(Exception):
 # ---------------------------------------------------------------------------
 
 class TinderApiClient:
-    """Thin async wrapper around the glassbead tinder-mcp-server HTTP API."""
+    """Thin async wrapper around the Tinder HTTP API using X-Auth-Token."""
 
-    def __init__(self, hass: HomeAssistant, mcp_url: str, user_id: str) -> None:
+    def __init__(self, hass: HomeAssistant, auth_token: str) -> None:
         self._hass = hass
-        self._base = mcp_url.rstrip("/")
-        self._user_id = user_id
+        self._auth_token = auth_token
+        self._base = TINDER_API_BASE.rstrip("/")
         self._timeout = aiohttp.ClientTimeout(total=HTTP_TIMEOUT)
 
     # ------------------------------------------------------------------
@@ -76,6 +77,7 @@ class TinderApiClient:
         method: str,
         path: str,
         json: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Execute an HTTP request and return the parsed JSON body."""
         session = async_get_clientsession(self._hass)
@@ -85,8 +87,12 @@ class TinderApiClient:
                 method,
                 url,
                 json=json,
-                # glassbead routes expect x-auth-user-id (not x-user-id)
-                headers={"x-auth-user-id": self._user_id},
+                params=params,
+                headers={
+                    "X-Auth-Token": self._auth_token,
+                    "Content-Type": "application/json",
+                    "User-Agent": "Tinder/11.4.0 (iPhone; iOS 12.4.1; Scale/2.00)",
+                },
                 timeout=self._timeout,
             ) as resp:
                 if resp.status == 401:
@@ -107,27 +113,31 @@ class TinderApiClient:
     # ------------------------------------------------------------------
 
     async def async_get_recommendations(self) -> list[dict[str, Any]]:
-        """GET /mcp/user/recommendations — return list of recommended profiles."""
+        """GET /v2/recs/core — return list of recommended profiles."""
         data = await self._request("GET", ENDPOINT_RECOMMENDATIONS)
-        return _extract_recs(data)
+        return data.get("data", {}).get("results", [])
 
     async def async_get_matches(self) -> list[dict[str, Any]]:
-        """GET /mcp/user/matches — return list of current matches."""
-        data = await self._request("GET", ENDPOINT_MATCHES)
-        return _extract_matches(data)
+        """GET /v2/matches — return list of current matches."""
+        data = await self._request(
+            "GET",
+            ENDPOINT_MATCHES,
+            params={"count": 60, "message": 1},
+        )
+        return data.get("data", {}).get("matches", [])
 
     async def async_like(self, target_user_id: str) -> dict[str, Any]:
-        """POST /mcp/interaction/like/{user_id}."""
+        """GET /like/{user_id}."""
         path = ENDPOINT_LIKE.format(user_id=target_user_id)
-        return await self._request("POST", path)
+        return await self._request("GET", path)
 
     async def async_pass(self, target_user_id: str) -> dict[str, Any]:
-        """POST /mcp/interaction/pass/{user_id}."""
+        """GET /pass/{user_id}."""
         path = ENDPOINT_PASS.format(user_id=target_user_id)
-        return await self._request("POST", path)
+        return await self._request("GET", path)
 
     async def async_superlike(self, target_user_id: str) -> dict[str, Any]:
-        """POST /mcp/interaction/superlike/{user_id}."""
+        """POST /like/{user_id}/super."""
         path = ENDPOINT_SUPERLIKE.format(user_id=target_user_id)
         return await self._request("POST", path)
 
@@ -149,7 +159,7 @@ class TinderCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.client = client
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Pull fresh data from the MCP server."""
+        """Pull fresh data from the Tinder API."""
         try:
             recs = await self.client.async_get_recommendations()
             matches = await self.client.async_get_matches()
@@ -159,7 +169,7 @@ class TinderCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             ) from err
         except TinderConnectionError as err:
             raise UpdateFailed(
-                f"Serveur MCP inaccessible: {err}"
+                f"API Tinder inaccessible: {err}"
             ) from err
 
         current: dict[str, Any] = recs[0] if recs else {}
@@ -183,10 +193,9 @@ class TinderCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Tinder MCP from a config entry."""
-    mcp_url: str = entry.data[CONF_MCP_URL]
-    user_id: str = entry.data[CONF_USER_ID]
+    auth_token: str = entry.data[CONF_AUTH_TOKEN]
 
-    client = TinderApiClient(hass, mcp_url, user_id)
+    client = TinderApiClient(hass, auth_token)
     coordinator = TinderCoordinator(hass, client)
 
     try:
@@ -287,35 +296,3 @@ def _extract_photo_url(recommendation: dict[str, Any]) -> str:
     except (KeyError, IndexError, TypeError):
         pass
     return ""
-
-
-def _extract_recs(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    """Handle multiple response shapes for recommendations."""
-    try:
-        # MCP shape: { success: true, data: <tinder_response> }
-        data = payload.get("data", payload)
-        # Tinder response may be { data: { results: [...] } } or { results: [...] }
-        if isinstance(data, dict):
-            if isinstance(data.get("results"), list):
-                return data["results"]
-            inner = data.get("data")
-            if isinstance(inner, dict) and isinstance(inner.get("results"), list):
-                return inner["results"]
-    except Exception:  # noqa: BLE001
-        return []
-    return []
-
-
-def _extract_matches(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    """Handle multiple response shapes for matches."""
-    try:
-        data = payload.get("data", payload)
-        if isinstance(data, dict):
-            if isinstance(data.get("matches"), list):
-                return data["matches"]
-            inner = data.get("data")
-            if isinstance(inner, dict) and isinstance(inner.get("matches"), list):
-                return inner["matches"]
-    except Exception:  # noqa: BLE001
-        return []
-    return []
